@@ -1,0 +1,1 @@
+*SchlundTech XML Gateway DNS Authenticator plugin for Certbot*
