@@ -61,6 +61,16 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
         self.gateway_client = _SchlundtechGatewayClient(USER, PASSWORD, CONTEXT, TTL)
         self._mock_call({})  # Safety mock
 
+    def test_auth(self):
+        self.assertDictEqual(
+            {
+                'user': USER,
+                'password': PASSWORD,
+                'context': CONTEXT
+            },
+            self.gateway_client._auth()
+        )
+
     def test_zone_info(self):
         self._mock_zone_info('success', {'name': DOMAIN})
         zone = self.gateway_client._zone_info(DOMAIN)
@@ -166,11 +176,11 @@ class XmlTest(unittest.TestCase):
 
     def test_fromstring(self):
         r = self.xml.fromstring(self.data)
-        self.assertDictEqual(r, self.obj)
+        self.assertDictEqual(self.obj, r)
 
     def test_tostring(self):
         r = self.xml.tostring(self.tag, self.obj).decode(self.encoding)
-        self.assertEqual(r, self.data)
+        self.assertEqual(self.data, r)
 
 
 if __name__ == '__main__':
