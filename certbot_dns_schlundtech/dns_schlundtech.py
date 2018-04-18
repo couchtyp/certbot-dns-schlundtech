@@ -1,8 +1,7 @@
 """DNS Authenticator for the SchlundTech XML Gateway."""
 import logging
 import xml.etree.ElementTree as Et
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
+from urllib2 import Request, urlopen, HTTPError, URLError
 
 import zope.interface
 from certbot import errors
@@ -90,8 +89,7 @@ class _SchlundtechGatewayClient:
         try:
             connection = urlopen(Request(
                 url=GATEWAY_URL,
-                data=self._xml.tostring('request', request),
-                method='POST'
+                data=self._xml.tostring('request', request)
             ))
             response = self._xml.fromstring(connection.read())
             if response is not None and response['result'] is not None:
@@ -113,11 +111,11 @@ class _SchlundtechGatewayClient:
                 'Communication error while calling {0}\nReason: {1}'.format(GATEWAY_URL, e.reason)
             )
 
-    def _zone_info(self, domain):
+    def _zone_info(self, domain, validation_name):
         result = self._call({
             'code': '0205',
             'zone': {
-                'name': domain
+                'name': self._zone_name(domain, validation_name)
             }
         })
         if result and result['status']['type'] == 'success':
@@ -130,7 +128,7 @@ class _SchlundtechGatewayClient:
             )
 
     def add_txt_record(self, domain, validation_name, validation):
-        info = self._zone_info(domain)
+        info = self._zone_info(domain, validation_name)
         current_value = self._current_value(info, domain, validation_name, validation)
         if current_value is not None and current_value != validation:
             logger.debug('{0} already exists with value {1}'.format(validation_name, current_value))
@@ -149,7 +147,7 @@ class _SchlundtechGatewayClient:
                 },
                 'default': {
                     'rr_add': {
-                        'name': self._strip_domain(domain, validation_name),
+                        'name': self._resource_name(domain, validation_name),
                         'type': 'TXT',
                         'value': validation,
                         'ttl': self.ttl
@@ -166,7 +164,7 @@ class _SchlundtechGatewayClient:
                 )
 
     def del_txt_record(self, domain, validation_name, validation):
-        info = self._zone_info(domain)
+        info = self._zone_info(domain, validation_name)
         result = self._call({
             'code': '0202001',
             'zone': {
@@ -175,7 +173,7 @@ class _SchlundtechGatewayClient:
             },
             'default': {
                 'rr_rem': {
-                    'name': _SchlundtechGatewayClient._strip_domain(domain, validation_name),
+                    'name': self._resource_name(domain, validation_name),
                     'type': 'TXT',
                     'value': validation,
                     'ttl': self.ttl
@@ -191,22 +189,27 @@ class _SchlundtechGatewayClient:
             )
 
     @staticmethod
+    def _zone_name(domain, validation_name):
+        return '.'.join(_SchlundtechGatewayClient._fqdn(domain, validation_name)[-2:])
+
+    @staticmethod
+    def _resource_name(domain, validation_name):
+        return '.'.join(_SchlundtechGatewayClient._fqdn(domain, validation_name)[0:-2])
+
+    @staticmethod
+    def _fqdn(domain, validation_name):
+        return validation_name.split('.') + domain.split('.')
+
+    @staticmethod
     def _current_value(info, domain, validation_name, validation):
-        prefix = _SchlundtechGatewayClient._strip_domain(domain, validation_name)
+        name = _SchlundtechGatewayClient._resource_name(domain, validation_name)
         if 'rr' in info:
             if type(info['rr']) != list:
                 info['rr'] = [info['rr']]  # Convert single values to list
             for rr in info['rr']:
-                if rr['name'] == prefix and rr['value'] != validation:
+                if rr['name'] == name and rr['value'] != validation:
                     return rr['value']
         return None
-
-    @staticmethod
-    def _strip_domain(domain, validation_name):
-        if validation_name.endswith(domain):
-            return validation_name.replace('.' + domain, '')
-        else:
-            return validation_name
 
     @staticmethod
     def _log_call_error(request, response, error):
@@ -226,34 +229,34 @@ class _XML:
         pass
 
     def tostring(self, tag, obj):
-        return Et.tostring(self.marshal(tag, obj))
+        return Et.tostring(self.serialize(tag, obj))
 
     def fromstring(self, data):
-        return self.unmarshal(Et.fromstring(data))
+        return self.deserialize(Et.fromstring(data))
 
-    def _marshal_value(self, e, tag, value):
+    def _serialize_value(self, e, tag, value):
         t = type(value)
         if value is None:
             pass
-        elif t in [str, int, float]:
+        elif t in [str, unicode, int, float]:
             Et.SubElement(e, tag).text = str(value)
         elif t == list:
             for item in value:
-                self._marshal_value(e, tag, item)
+                self._serialize_value(e, tag, item)
         elif t == dict:
-            e.append(self.marshal(tag, value))
+            e.append(self.serialize(tag, value))
         elif hasattr(value, '__dict__'):
-            e.append(self.marshal(tag, value.__dict__))
+            e.append(self.serialize(tag, value.__dict__))
         else:
-            raise NotImplementedError('Unable to serialize {0}={1}'.format(tag, value))
+            raise NotImplementedError('Unable to serialize {0}={1} ({2})'.format(tag, value, type(value)))
 
-    def marshal(self, tag, data):
+    def serialize(self, tag, data):
         e = Et.Element(tag)
         for name, value in data.items():
-            self._marshal_value(e, name, value)
+            self._serialize_value(e, name, value)
         return e
 
-    def unmarshal(self, e):
+    def deserialize(self, e):
         if e.text is not None:
             return e.text
         elif len(e) == 0:
@@ -262,7 +265,7 @@ class _XML:
             result = {}
             for child in e:
                 name = child.tag
-                value = self.unmarshal(child)
+                value = self.deserialize(child)
                 if name in result:
                     if type(result[name]) == list:
                         result[name].append(value)
