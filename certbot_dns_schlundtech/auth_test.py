@@ -51,8 +51,8 @@ class AuthenticatorTest(test_util.TempDirTestCase, dns_test_common.BaseAuthentic
 
 
 class SchlundtechGatewayClientTest(unittest.TestCase):
-    record_prefix = "_acme-challenge"
-    record_name = record_prefix + "." + DOMAIN
+    record_name = "_acme-challenge"
+    record_fqdn = record_name + "." + DOMAIN
     record_content = "bar"
     system_ns = "ns1." + DOMAIN
 
@@ -73,12 +73,12 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
 
     def test_zone_info(self):
         self._mock_zone_info('success', {'name': DOMAIN})
-        zone = self.gateway_client._zone_info(DOMAIN, self.record_name)
+        zone = self.gateway_client._zone_info(DOMAIN, self.record_fqdn)
         self.assertDictEqual(zone, {'name': DOMAIN})
 
     def test_zone_info_domain_missing(self):
         self._mock_zone_info('error')
-        self.assertRaises(errors.PluginError, self.gateway_client._zone_info, DOMAIN, self.record_name)
+        self.assertRaises(errors.PluginError, self.gateway_client._zone_info, DOMAIN, self.record_fqdn)
 
     def test_add_txt_record(self):
         self._mock_zone_info('success', {'name': DOMAIN, 'system_ns': self.system_ns, 'soa': {'level': '1'}}, False)
@@ -92,7 +92,7 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
             },
             'default': {
                 'rr_add': {
-                    'name': self.record_prefix,
+                    'name': self.record_name,
                     'type': 'TXT',
                     'value': self.record_content,
                     'ttl': TTL
@@ -110,7 +110,7 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
         self._mock_zone_info('success',
                              {
                                  'name': DOMAIN, 'system_ns': self.system_ns, 'soa': {'level': '1'},
-                                 'rr': [{'name': self.record_prefix, 'value': self.record_prefix}]
+                                 'rr': [{'name': self.record_name, 'value': self.record_name}]
                              })
         self.assertRaises(errors.PluginError,
                           self.gateway_client.add_txt_record, DOMAIN, self.record_name, self.record_content)
@@ -133,7 +133,7 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
             },
             'default': {
                 'rr_rem': {
-                    'name': self.record_prefix,
+                    'name': self.record_name,
                     'type': 'TXT',
                     'value': self.record_content,
                     'ttl': TTL
