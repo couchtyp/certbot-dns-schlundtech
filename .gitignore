@@ -1,3 +1,8 @@
+# IntelliJ IDEA
 .idea
 *.iml
+
+# Python
 venv
+*.egg-info
+*.pyc
