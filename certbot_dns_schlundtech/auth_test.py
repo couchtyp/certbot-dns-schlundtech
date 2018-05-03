@@ -1,4 +1,4 @@
-"""Tests for certbot_dns_schlundtech.dns_schlundtech."""
+"""Tests for certbot_dns_schlundtech.auth."""
 import os
 import unittest
 
@@ -17,19 +17,19 @@ TTL = 10
 class AuthenticatorTest(test_util.TempDirTestCase, dns_test_common.BaseAuthenticatorTest):
 
     def setUp(self):
-        from certbot_dns_schlundtech.dns_schlundtech import Authenticator
+        from certbot_dns_schlundtech.auth import Authenticator
 
         super(AuthenticatorTest, self).setUp()
 
         path = os.path.join(self.tempdir, 'file.ini')
         dns_test_common.write({
-            "schlundtech_user": USER,
-            "schlundtech_password": PASSWORD,
-            "schlundtech_context": CONTEXT
+            "auth_user": USER,
+            "auth_password": PASSWORD,
+            "auth_context": CONTEXT
         }, path)
 
-        self.config = mock.MagicMock(schlundtech_credentials=path, schlundtech_propagation_seconds=0)
-        self.auth = Authenticator(self.config, "schlundtech")
+        self.config = mock.MagicMock(auth_credentials=path, auth_propagation_seconds=0)
+        self.auth = Authenticator(self.config, "auth")
 
         self.mock_client = mock.MagicMock()
         # _get_gateway_client | pylint: disable=protected-access
@@ -57,7 +57,7 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
     system_ns = "ns1" + DOMAIN
 
     def setUp(self):
-        from certbot_dns_schlundtech.dns_schlundtech import _SchlundtechGatewayClient
+        from certbot_dns_schlundtech.auth import _SchlundtechGatewayClient
         self.gateway_client = _SchlundtechGatewayClient(USER, PASSWORD, CONTEXT, TTL)
         self._mock_call({})  # Safety mock
 
@@ -171,7 +171,7 @@ class XmlTest(unittest.TestCase):
     encoding = 'UTF-8'
 
     def setUp(self):
-        from certbot_dns_schlundtech.dns_schlundtech import _XML
+        from certbot_dns_schlundtech.auth import _XML
         self.xml = _XML()
 
     def test_fromstring(self):

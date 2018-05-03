@@ -6,9 +6,9 @@ subsequently removing, TXT records using the SchlundTech XML Gateway API.
 Named Arguments
 ---------------
 =======================================  =====================================
-``dns-schlundtech-credentials``          SchlundTech credentials_ INI file.
+``auth-credentials``                     SchlundTech credentials_ INI file.
                                          (Required)
-``dns-schlundtech-propagation-seconds``  The number of seconds to wait for DNS
+``auth-propagation-seconds``             The number of seconds to wait for DNS
                                          to propagate before asking the ACME
                                          server to verify the DNS record.
                                          (Default: 60)
@@ -27,13 +27,14 @@ Gateway API credentials:
    :name: credentials.ini
    :caption: Example credentials config file:
    # Credentials
-   certbot_dns_schlundtech:dns_schlundtech_user = 54321
-   certbot_dns_schlundtech:dns_schlundtech_password = PASSWORD
-   certbot_dns_schlundtech:dns_schlundtech_context = 10
+   certbot_dns_schlundtech:auth_user = 54321
+   certbot_dns_schlundtech:auth_password = PASSWORD
+   certbot_dns_schlundtech:auth_context = 10
 
 The path to this file can be provided interactively or using the
-``--dns-schlundtech-credentials`` command-line argument. Certbot records the path
-to this file for use during renewal, but does not store the file's contents.
+``--certbot-dns-schlundtech:auth-credentials`` command-line argument. Certbot
+records the path to this file for use during renewal, but does not store the
+file's contents.
 
 .. caution::
    You should protect these credentials. Users who can read this file can use
@@ -50,8 +51,8 @@ Examples
    :caption: To acquire a certificate for ``example.com``
    certbot certonly \\
      --server https://acme-v02.api.letsencrypt.org/directory \\
-     -a certbot-dns-schlundtech:dns-schlundtech \\
-     --certbot-dns-schlundtech:dns-schlundtech-credentials \\
+     -a certbot-dns-schlundtech:auth \\
+     --certbot-dns-schlundtech:auth-credentials \\
        ~/.secrets/certbot/schlundtech.ini \\
      -d example.com
 .. code-block:: bash
@@ -59,8 +60,8 @@ Examples
              ``www.example.com``
    certbot certonly \\
      --server https://acme-v02.api.letsencrypt.org/directory \\
-     -a certbot-dns-schlundtech:dns-schlundtech \\
-     --certbot-dns-schlundtech:dns-schlundtech-credentials \\
+     -a certbot-dns-schlundtech:auth \\
+     --certbot-dns-schlundtech:auth-credentials \\
        ~/.secrets/certbot/schlundtech.ini \\
      -d example.com \\
      -d www.example.com
@@ -69,9 +70,9 @@ Examples
              for DNS propagation
    certbot certonly \\
      --server https://acme-v02.api.letsencrypt.org/directory \\
-     -a certbot-dns-schlundtech:dns-schlundtech \\
-     --certbot-dns-schlundtech:dns-schlundtech-credentials \\
+     -a certbot-dns-schlundtech:auth \\
+     --certbot-dns-schlundtech:auth-credentials \\
        ~/.secrets/certbot/schlundtech.ini \\
-     --certbot-dns-schlundtech:dns-schlundtech-propagation-seconds 60 \\
+     --certbot-dns-schlundtech:auth-propagation-seconds 60 \\
      -d example.com
 """

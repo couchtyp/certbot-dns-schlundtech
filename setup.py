@@ -55,7 +55,7 @@ setup(
     },
     entry_points={
         'certbot.plugins': [
-            'dns-schlundtech = certbot_dns_schlundtech.dns_schlundtech:Authenticator',
+            'dns-schlundtech = certbot_dns_schlundtech.auth:Authenticator',
         ],
     },
     test_suite='certbot_dns_schlundtech',
