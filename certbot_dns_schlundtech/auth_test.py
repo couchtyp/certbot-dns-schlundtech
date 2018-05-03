@@ -54,7 +54,7 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
     record_prefix = "_acme-challenge"
     record_name = record_prefix + "." + DOMAIN
     record_content = "bar"
-    system_ns = "ns1" + DOMAIN
+    system_ns = "ns1." + DOMAIN
 
     def setUp(self):
         from certbot_dns_schlundtech.auth import _SchlundtechGatewayClient
@@ -73,12 +73,12 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
 
     def test_zone_info(self):
         self._mock_zone_info('success', {'name': DOMAIN})
-        zone = self.gateway_client._zone_info(DOMAIN)
+        zone = self.gateway_client._zone_info(DOMAIN, self.record_name)
         self.assertDictEqual(zone, {'name': DOMAIN})
 
     def test_zone_info_domain_missing(self):
         self._mock_zone_info('error')
-        self.assertRaises(errors.PluginError, self.gateway_client._zone_info, DOMAIN)
+        self.assertRaises(errors.PluginError, self.gateway_client._zone_info, DOMAIN, self.record_name)
 
     def test_add_txt_record(self):
         self._mock_zone_info('success', {'name': DOMAIN, 'system_ns': self.system_ns, 'soa': {'level': '1'}}, False)

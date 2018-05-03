@@ -198,7 +198,10 @@ class _SchlundtechGatewayClient:
 
     @staticmethod
     def _fqdn(domain, validation_name):
-        return validation_name.split('.') + domain.split('.')
+        if validation_name.endswith(domain):
+            return validation_name.split('.')
+        else:
+            return validation_name.split('.') + domain.split('.')
 
     @staticmethod
     def _current_value(info, domain, validation_name, validation):
