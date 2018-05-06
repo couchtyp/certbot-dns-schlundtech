@@ -142,7 +142,7 @@ class _SchlundtechGatewayClient:
             result = self._call({
                 'code': '0202001',
                 'zone': {
-                    'name': domain,
+                    'name': self._zone_name(domain, validation_name),
                     'system_ns': info['system_ns']
                 },
                 'default': {
@@ -168,7 +168,7 @@ class _SchlundtechGatewayClient:
         result = self._call({
             'code': '0202001',
             'zone': {
-                'name': domain,
+                'name': self._zone_name(domain, validation_name),
                 'system_ns': info['system_ns']
             },
             'default': {
