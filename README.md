@@ -5,8 +5,8 @@ completing a ``dns-01`` challenge (`acme.challenges.DNS01`) by creating, and
 subsequently removing, TXT records using the SchlundTech XML Gateway API.
 
 ### Named Arguments
-| | |
-| ---: | --- |
+| Argument | Description |
+| ---: | :--- |
 | `auth-credentials` | SchlundTech credentials_ INI file. (Required) |
 | `auth-propagation-seconds` | The number of seconds to wait for DNS to propagate before asking the ACME server to verify the DNS record. (Default: 60) |
 
