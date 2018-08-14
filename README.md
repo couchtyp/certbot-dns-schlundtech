@@ -69,7 +69,7 @@ certbot certonly \
 Using the provided [Dockerfile](Dockerfile) you can create a docker container based on the original `certbot/certbot`
 image plus this plugin.
 ```bash
-
+docker build -t certbot/dns-schlundtech .
 ```
   
 The resulting container image can be run with the options provided above.
