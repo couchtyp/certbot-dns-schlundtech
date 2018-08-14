@@ -65,7 +65,7 @@ certbot certonly \
     -d example.com
 ```
 
-##### Using docker
+### Using docker
 Using the provided [Dockerfile](Dockerfile) you can create a docker container based on the original `certbot/certbot`
 image plus this plugin.
 ```bash
