@@ -67,9 +67,9 @@ certbot certonly \
 
 ### Using docker
 Using the provided [Dockerfile](Dockerfile) you can create a docker container based on the original `certbot/certbot`
-image plus this plugin.
+image plus this plugin. Using the *--pull* option makes sure the latest certbot image is pulled.
 ```bash
-docker build -t certbot/dns-schlundtech .
+docker build --pull -t certbot/dns-schlundtech .
 ```
   
 The resulting container image can be run with the options provided above.
