@@ -129,14 +129,9 @@ class _SchlundtechGatewayClient:
 
     def add_txt_record(self, domain, validation_name, validation):
         info = self._zone_info(domain, validation_name)
-        current_value = self._current_value(info, domain, validation_name, validation)
-        if current_value is not None and current_value != validation:
-            logger.debug('{0} already exists with value {1}'.format(validation_name, current_value))
-            raise errors.PluginError(
-                'TXT record {1} for {0} already exists with different value'.format(domain, validation_name)
-            )
-        elif current_value == validation:
-            logger.debug('{0} already exists with identical value'.format(validation_name))
+        current_values = self._current_values(info, domain, validation_name)
+        if len(current_values) > 0 and validation in current_values:
+            logger.debug('{0} already exists with required value'.format(validation_name))
             pass
         else:
             result = self._call({
@@ -162,6 +157,8 @@ class _SchlundtechGatewayClient:
                 raise errors.PluginError(
                     'Unable to add TXT record for {0}: {1}{2}'.format(domain, validation_name, msg)
                 )
+            else:
+                logger.debug('Successfully added TXT record \'{1}\' for domain \'{0}\''.format(domain, validation_name))
 
     def del_txt_record(self, domain, validation_name, validation):
         info = self._zone_info(domain, validation_name)
@@ -187,6 +184,8 @@ class _SchlundtechGatewayClient:
             raise errors.PluginError(
                 'Unable to remove TXT record for {0}: {1}{2}'.format(domain, validation_name, msg)
             )
+        else:
+            logger.debug('Successfully removed TXT record \'{1}\' for domain \'{0}\''.format(domain, validation_name))
 
     @staticmethod
     def _zone_name(domain, validation_name):
@@ -204,15 +203,16 @@ class _SchlundtechGatewayClient:
             return validation_name.split('.') + domain.split('.')
 
     @staticmethod
-    def _current_value(info, domain, validation_name, validation):
+    def _current_values(info, domain, validation_name):
         name = _SchlundtechGatewayClient._resource_name(domain, validation_name)
+        result = []
         if 'rr' in info:
             if type(info['rr']) != list:
                 info['rr'] = [info['rr']]  # Convert single values to list
             for rr in info['rr']:
-                if rr['name'] == name and rr['value'] != validation:
-                    return rr['value']
-        return None
+                if rr['name'] == name:
+                    result.append(rr['value'])
+        return result
 
     @staticmethod
     def _log_call_error(request, response, error):
