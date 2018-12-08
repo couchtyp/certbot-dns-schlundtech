@@ -239,7 +239,7 @@ class _XML:
         return self.deserialize(Et.fromstring(data))
 
     def _serialize_value(self, e, tag, value):
-        t = type(value).__name__
+        t = type(value).__name__ if type(value) is not None else None
         if value is None:
             pass
         elif t in ['str', 'unicode', 'bytes', 'int', 'float']:
