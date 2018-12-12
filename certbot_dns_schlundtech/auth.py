@@ -1,8 +1,11 @@
 """DNS Authenticator for the SchlundTech XML Gateway."""
 import logging
 import xml.etree.ElementTree as Et
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
+try:
+    from urllib.request import Request, urlopen
+    from urllib.error import HTTPError, URLError
+except ImportError:
+    from urllib2 import Request, urlopen, HTTPError, URLError
 
 import zope.interface
 from certbot import errors
