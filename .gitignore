@@ -1,11 +1,28 @@
-# IntelliJ IDEA
-.idea
-*.iml
+# General
+*.log
 
+# MacOS X
+.DS_Store
+.AppleDouble
+.LSOverride
+.apdisk
+.AppleDB
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
 # Visual Studio Code
-.vscode
+.vscode/
 
 # Python
-venv
+.Python
+.python-version
+.venv
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.eggs
 *.egg-info
-*.pyc
+*.egg
