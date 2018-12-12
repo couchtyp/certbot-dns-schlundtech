@@ -111,9 +111,26 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
                              {
                                  'name': DOMAIN, 'system_ns': self.system_ns, 'soa': {'level': '1'},
                                  'rr': [{'name': self.record_name, 'value': self.record_name}]
-                             })
-        self.assertRaises(errors.PluginError,
-                          self.gateway_client.add_txt_record, DOMAIN, self.record_name, self.record_content)
+                             },
+                             False)
+        self._mock_call({'status': {'type': 'success'}})
+        self.gateway_client.add_txt_record(DOMAIN, self.record_name, self.record_content)
+        self.gateway_client._call.assert_called_with({
+            'code': '0202001',
+            'zone': {
+                'name': DOMAIN,
+                'system_ns': self.system_ns
+            },
+            'default': {
+                'rr_add': {
+                    'name': self.record_name,
+                    'type': 'TXT',
+                    'value': self.record_content,
+                    'ttl': TTL
+                },
+                'soa': {'level': '1'}
+            }
+        })
 
     def test_add_txt_record_error(self):
         self._mock_zone_info('success', {'name': DOMAIN, 'system_ns': self.system_ns, 'soa': {'level': '1'}}, False)
