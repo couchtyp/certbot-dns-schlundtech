@@ -2,13 +2,13 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-version = '0.03.0'
+version = '0.04.0'
 
 # Remember to update local-oldest-requirements.txt when changing the minimum
 # acme/certbot version.
 install_requires = [
-    'acme>=0.21.1',
-    'certbot>=0.21.1',
+    'acme>=0.29.0',
+    'certbot>=1.0.0',
     'mock',
     'setuptools',
     'zope.interface',
