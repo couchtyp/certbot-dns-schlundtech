@@ -24,7 +24,7 @@ class Authenticator(dns_common.DNSAuthenticator):
 
     This Authenticator uses the SchlundTech XML Gateway API to fulfill a dns-01 challenge.
     """
-    description = 'Obtain certificates using a DNS TXT record.'
+    description = 'Obtain certificates using a DNS TXT record (if you are using SchlundTech for DNS).'
     ttl = 60
 
     def __init__(self, *args, **kwargs):
@@ -50,6 +50,7 @@ class Authenticator(dns_common.DNSAuthenticator):
                 'context': 'Context to use.'
             }
         )
+        print("user = {}".format(self.credentials.conf('user')))
 
     def _perform(self, domain, validation_name, validation):
         self._get_gateway_client().add_txt_record(domain, validation_name, validation)

@@ -27,7 +27,7 @@ setup(
     license='MIT License',
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Plugins',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: Apache Software License',
@@ -36,8 +36,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Topic :: Internet :: WWW/HTTP',
@@ -56,7 +54,7 @@ setup(
     },
     entry_points={
         'certbot.plugins': [
-            'auth = certbot_dns_schlundtech.auth:Authenticator',
+            'dns-schlundtech = certbot_dns_schlundtech.auth:Authenticator',
         ],
     },
     test_suite='certbot_dns_schlundtech',
