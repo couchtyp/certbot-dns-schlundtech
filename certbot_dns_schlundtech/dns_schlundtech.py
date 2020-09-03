@@ -45,12 +45,11 @@ class Authenticator(dns_common.DNSAuthenticator):
             'credentials',
             'SchlundTech XML Gateway credentials file',
             {
-                'user': 'Username for the SchlundTech XML Gateway.',
-                'password': 'Password for the SchlundTech XML Gateway.',
-                'context': 'Context to use.'
+                'user': 'the username for the SchlundTech XML Gateway',
+                'password': 'the password for the SchlundTech XML Gateway',
+                'context': 'the numeric SchlundTech XML Gateway context to use'
             }
         )
-        print("user = {}".format(self.credentials.conf('user')))
 
     def _perform(self, domain, validation_name, validation):
         self._get_gateway_client().add_txt_record(domain, validation_name, validation)
