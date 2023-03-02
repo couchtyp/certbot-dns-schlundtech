@@ -1,6 +1,7 @@
 """DNS Authenticator for the SchlundTech XML Gateway."""
 import logging
 import xml.etree.ElementTree as Et
+
 try:
     from urllib.request import Request, urlopen
     from urllib.error import HTTPError, URLError
@@ -34,8 +35,8 @@ class Authenticator(dns_common.DNSAuthenticator):
         self.credentials = None
 
     @classmethod
-    def add_parser_arguments(cls, add):  # pylint: disable=arguments-differ
-        super(Authenticator, cls).add_parser_arguments(add, default_propagation_seconds=30)
+    def add_parser_arguments(cls, add, default_propagation_seconds: int = 30):  # pylint: disable=arguments-differ
+        super(Authenticator, cls).add_parser_arguments(add, default_propagation_seconds)
         add('credentials', help='SchlundTech XML Gateway credentials file.')
 
     def more_info(self):  # pylint: disable=missing-docstring,no-self-use
@@ -93,7 +94,7 @@ class _SchlundtechGatewayClient:
             'context': self.context
         }
 
-    def _call(self, task):
+    def _call(self, task) -> {}:
         request = {
             'auth': self._auth(),
             'language': 'en',
@@ -127,7 +128,6 @@ class _SchlundtechGatewayClient:
     def _zone_info(self, domain, validation_name):
         if self._info is not None:
             return self._info
-
 
         offset = len(_SchlundtechGatewayClient._fqdn(domain, validation_name)) - 1
         while offset > 1:
