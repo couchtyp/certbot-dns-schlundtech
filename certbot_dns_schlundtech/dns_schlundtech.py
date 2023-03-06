@@ -36,7 +36,7 @@ class Authenticator(dns_common.DNSAuthenticator):
         super(Authenticator, cls).add_parser_arguments(add, default_propagation_seconds=30)
         add('credentials', help='SchlundTech XML Gateway credentials file.')
 
-    def more_info(self):  # pylint: disable=missing-docstring,no-self-use
+    def more_info(self):  # pylint: disable=missing-docstring
         return 'This plugin configures a DNS TXT record to respond to a dns-01 challenge using ' + \
                'the SchlundTech XML Gateway API.'
 
@@ -47,7 +47,8 @@ class Authenticator(dns_common.DNSAuthenticator):
             {
                 'user': 'the username for the SchlundTech XML Gateway',
                 'password': 'the password for the SchlundTech XML Gateway',
-                'context': 'the numeric SchlundTech XML Gateway context to use'
+                'context': 'the numeric SchlundTech XML Gateway context to use',
+                'token': 'the 2FA token to use, optional',
             }
         )
 
@@ -62,6 +63,7 @@ class Authenticator(dns_common.DNSAuthenticator):
             user=self.credentials.conf('user'),
             password=self.credentials.conf('password'),
             context=self.credentials.conf('context'),
+            token=self.credentials.conf('token'),
             ttl=self.ttl
         )
 
@@ -70,19 +72,23 @@ class _SchlundtechGatewayClient:
     """
     Encapsulates all communication with the SchlundTech XML Gateway.
     """
-    def __init__(self, user, password, context, ttl):
+    def __init__(self, user, password, context, token=None, ttl=60):
         self.user = user
         self.password = password
         self.context = context
+        self.token = token
         self.ttl = ttl
         self._xml = _XML()
 
     def _auth(self):
-        return {
+        result = {
             'user': self.user,
             'password': self.password,
-            'context': self.context
+            'context': self.context,
         }
+        if self.token is not None:
+            result['token'] = self.token
+        return result
 
     def _call(self, task):
         request = {

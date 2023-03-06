@@ -1,5 +1,5 @@
 """Tests for certbot_dns_schlundtech.dns_schlundtech."""
-import os
+import certbot.compat.os as os
 import unittest
 
 import mock
@@ -8,9 +8,12 @@ from certbot.plugins import dns_test_common
 from certbot.plugins.dns_test_common import DOMAIN
 from certbot.tests import util as test_util
 
+patch_display_util = test_util.patch_display_util
+
 USER = 'user'
 PASSWORD = 'password'
 CONTEXT = 10
+TOKEN = 'token'
 TTL = 10
 
 
@@ -25,7 +28,8 @@ class AuthenticatorTest(test_util.TempDirTestCase, dns_test_common.BaseAuthentic
         dns_test_common.write({
             "dns_schlundtech_user": USER,
             "dns_schlundtech_password": PASSWORD,
-            "dns_schlundtech_context": CONTEXT
+            "dns_schlundtech_context": CONTEXT,
+            "dns_schlundtech_token": TOKEN,
         }, path)
 
         self.config = mock.MagicMock(dns_schlundtech_credentials=path, dns_schlundtech_propagation_seconds=0)
@@ -35,13 +39,15 @@ class AuthenticatorTest(test_util.TempDirTestCase, dns_test_common.BaseAuthentic
         # _get_gateway_client | pylint: disable=protected-access
         self.auth._get_gateway_client = mock.MagicMock(return_value=self.mock_client)
 
-    def test_perform(self):
+    @patch_display_util()
+    def test_perform(self, unused_mock_get_utility):
         self.auth.perform([self.achall])
 
         expected = [mock.call.add_txt_record(DOMAIN, '_acme-challenge.'+DOMAIN, mock.ANY)]
         self.assertEqual(expected, self.mock_client.mock_calls)
 
-    def test_cleanup(self):
+    @patch_display_util()
+    def test_cleanup(self, unused_mock_get_utility):
         # _attempt_cleanup | pylint: disable=protected-access
         self.auth._attempt_cleanup = True
         self.auth.cleanup([self.achall])
@@ -58,7 +64,7 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
 
     def setUp(self):
         from certbot_dns_schlundtech.dns_schlundtech import _SchlundtechGatewayClient
-        self.gateway_client = _SchlundtechGatewayClient(USER, PASSWORD, CONTEXT, TTL)
+        self.gateway_client = _SchlundtechGatewayClient(USER, PASSWORD, CONTEXT, TOKEN, TTL)
         self._mock_call({})  # Safety mock
 
     def test_auth(self):
@@ -66,7 +72,8 @@ class SchlundtechGatewayClientTest(unittest.TestCase):
             {
                 'user': USER,
                 'password': PASSWORD,
-                'context': CONTEXT
+                'context': CONTEXT,
+                'token': TOKEN
             },
             self.gateway_client._auth()
         )
