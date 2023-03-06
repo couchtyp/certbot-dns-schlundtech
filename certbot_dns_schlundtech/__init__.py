@@ -25,6 +25,7 @@ Gateway API credentials:
 * ``user``
 * ``password``
 * ``context``
+* ``token``
 
 .. code-block:: ini
    :name: credentials.ini
@@ -33,6 +34,7 @@ Gateway API credentials:
    dns_schlundtech_user = 54321
    dns_schlundtech_password = PASSWORD
    dns_schlundtech_context = 10
+   dns_schlundtech_token = SECRETTOKEN
 
 The path to this file can be provided interactively or using the
 `--dns-schlundtech-credentials` command-line argument. Certbot records the
