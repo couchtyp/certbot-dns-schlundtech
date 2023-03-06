@@ -16,12 +16,14 @@ Gateway API credentials:
 * `user`
 * `password`
 * `context`
+* `token`
 
 ```ini
 # credentials.ini
 dns_schlundtech_user = 54321
 dns_schlundtech_password = PASSWORD
 dns_schlundtech_context = 10
+dns_schlundtech_token = SECRET-2FA-TOKEN
 ```
 
 The path to this file can be provided interactively or using the
