@@ -50,8 +50,7 @@ class Authenticator(dns_common.DNSAuthenticator):
             {
                 'user': 'the username for the SchlundTech XML Gateway',
                 'password': 'the password for the SchlundTech XML Gateway',
-                'context': 'the numeric SchlundTech XML Gateway context to use',
-                'token': 'the 2FA token to use, optional',
+                'context': 'the numeric SchlundTech XML Gateway context to use'
             }
         )
 
