@@ -1,6 +1,7 @@
 """DNS Authenticator for the SchlundTech XML Gateway."""
 import logging
 import xml.etree.ElementTree as Et
+
 try:
     from urllib.request import Request, urlopen
     from urllib.error import HTTPError, URLError
@@ -27,13 +28,15 @@ class Authenticator(dns_common.DNSAuthenticator):
     description = 'Obtain certificates using a DNS TXT record (if you are using SchlundTech for DNS).'
     ttl = 60
 
+    _client = None
+
     def __init__(self, *args, **kwargs):
         super(Authenticator, self).__init__(*args, **kwargs)
         self.credentials = None
 
     @classmethod
-    def add_parser_arguments(cls, add):  # pylint: disable=arguments-differ
-        super(Authenticator, cls).add_parser_arguments(add, default_propagation_seconds=30)
+    def add_parser_arguments(cls, add, default_propagation_seconds: int = 30):  # pylint: disable=arguments-differ
+        super(Authenticator, cls).add_parser_arguments(add, default_propagation_seconds)
         add('credentials', help='SchlundTech XML Gateway credentials file.')
 
     def more_info(self):  # pylint: disable=missing-docstring
@@ -47,8 +50,7 @@ class Authenticator(dns_common.DNSAuthenticator):
             {
                 'user': 'the username for the SchlundTech XML Gateway',
                 'password': 'the password for the SchlundTech XML Gateway',
-                'context': 'the numeric SchlundTech XML Gateway context to use',
-                'token': 'the 2FA token to use, optional',
+                'context': 'the numeric SchlundTech XML Gateway context to use'
             }
         )
 
@@ -59,13 +61,18 @@ class Authenticator(dns_common.DNSAuthenticator):
         self._get_gateway_client().del_txt_record(domain, validation_name, validation)
 
     def _get_gateway_client(self):
-        return _SchlundtechGatewayClient(
+        if self._client is not None:
+            return self._client
+
+        self._client = _SchlundtechGatewayClient(
             user=self.credentials.conf('user'),
             password=self.credentials.conf('password'),
             context=self.credentials.conf('context'),
             token=self.credentials.conf('token'),
             ttl=self.ttl
         )
+
+        return self._client
 
 
 class _SchlundtechGatewayClient:
@@ -79,6 +86,8 @@ class _SchlundtechGatewayClient:
         self.token = token
         self.ttl = ttl
         self._xml = _XML()
+        self._offset = None
+        self._info = None
 
     def _auth(self):
         result = {
@@ -90,7 +99,7 @@ class _SchlundtechGatewayClient:
             result['token'] = self.token
         return result
 
-    def _call(self, task):
+    def _call(self, task) -> {}:
         request = {
             'auth': self._auth(),
             'language': 'en',
@@ -122,24 +131,47 @@ class _SchlundtechGatewayClient:
             )
 
     def _zone_info(self, domain, validation_name):
+        if self._info is not None:
+            return self._info
+
+        offset = len(_SchlundtechGatewayClient._fqdn(domain, validation_name)) - 1
+        while offset > 1:
+            info = self._try_zone_info(domain, validation_name, offset)
+            if info is not None:
+                self._info = info
+                self._offset = offset
+                return self._info
+            else:
+                offset = offset - 1
+        else:
+            logger.debug(
+                'Failed fetching domain info for validation_name \'{1}\' and domain \'{0}\''.format(
+                    domain, validation_name
+                )
+            )
+            logger.debug('Failed retrieving zone {0} with validation name {1}'.format(domain, validation_name))
+            raise errors.PluginError(
+                'Unable to find a SchlundTech zone for {0} with validation name {1}'.format(domain, validation_name)
+            )
+
+    def _try_zone_info(self, domain, validation_name, offset):
+        candidate = self._zone_name(domain, validation_name, offset)
         result = self._call({
             'code': '0205',
             'zone': {
-                'name': self._zone_name(domain, validation_name)
+                'name': candidate
             }
         })
         if result and result['status']['type'] == 'success':
             return result['data']['zone']
         else:
-            logger.debug('Failed retrieving zone {0}'.format(domain))
+            logger.debug('Failed retrieving zone {0} using candidate'.format(domain, candidate))
             logger.debug('Response was: ' + repr(result))
-            raise errors.PluginError(
-                'Unable to find a SchlundTech zone for {0}'.format(domain)
-            )
+            return None
 
     def add_txt_record(self, domain, validation_name, validation):
         info = self._zone_info(domain, validation_name)
-        current_values = self._current_values(info, domain, validation_name)
+        current_values = self._current_values(info, domain, validation_name, self._offset)
         if len(current_values) > 0 and validation in current_values:
             logger.debug('{0} already exists with required value'.format(validation_name))
             pass
@@ -147,12 +179,12 @@ class _SchlundtechGatewayClient:
             result = self._call({
                 'code': '0202001',
                 'zone': {
-                    'name': self._zone_name(domain, validation_name),
+                    'name': self._zone_name(domain, validation_name, self._offset),
                     'system_ns': info['system_ns']
                 },
                 'default': {
                     'rr_add': {
-                        'name': self._resource_name(domain, validation_name),
+                        'name': self._resource_name(domain, validation_name, self._offset),
                         'type': 'TXT',
                         'value': validation,
                         'ttl': self.ttl
@@ -175,12 +207,12 @@ class _SchlundtechGatewayClient:
         result = self._call({
             'code': '0202001',
             'zone': {
-                'name': self._zone_name(domain, validation_name),
+                'name': self._zone_name(domain, validation_name, self._offset),
                 'system_ns': info['system_ns']
             },
             'default': {
                 'rr_rem': {
-                    'name': self._resource_name(domain, validation_name),
+                    'name': self._resource_name(domain, validation_name, self._offset),
                     'type': 'TXT',
                     'value': validation,
                     'ttl': self.ttl
@@ -198,12 +230,14 @@ class _SchlundtechGatewayClient:
             logger.debug('Successfully removed TXT record \'{1}\' for domain \'{0}\''.format(domain, validation_name))
 
     @staticmethod
-    def _zone_name(domain, validation_name):
-        return '.'.join(_SchlundtechGatewayClient._fqdn(domain, validation_name)[-2:])
+    def _zone_name(domain, validation_name, offset):
+        cut = -1 * offset
+        return '.'.join(_SchlundtechGatewayClient._fqdn(domain, validation_name)[cut:])
 
     @staticmethod
-    def _resource_name(domain, validation_name):
-        return '.'.join(_SchlundtechGatewayClient._fqdn(domain, validation_name)[0:-2])
+    def _resource_name(domain, validation_name, offset):
+        cut = -1 * offset
+        return '.'.join(_SchlundtechGatewayClient._fqdn(domain, validation_name)[0:cut])
 
     @staticmethod
     def _fqdn(domain, validation_name):
@@ -213,8 +247,8 @@ class _SchlundtechGatewayClient:
             return validation_name.split('.') + domain.split('.')
 
     @staticmethod
-    def _current_values(info, domain, validation_name):
-        name = _SchlundtechGatewayClient._resource_name(domain, validation_name)
+    def _current_values(info, domain, validation_name, offset):
+        name = _SchlundtechGatewayClient._resource_name(domain, validation_name, offset)
         result = []
         if 'rr' in info:
             if type(info['rr']) != list:
