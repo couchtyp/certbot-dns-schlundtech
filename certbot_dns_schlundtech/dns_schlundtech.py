@@ -1,6 +1,7 @@
 """DNS Authenticator for the SchlundTech XML Gateway."""
 import logging
 import xml.etree.ElementTree as Et
+import pyotp
 try:
     from urllib.request import Request, urlopen
     from urllib.error import HTTPError, URLError
@@ -87,7 +88,8 @@ class _SchlundtechGatewayClient:
             'context': self.context,
         }
         if self.token is not None:
-            result['token'] = self.token
+            totp = pyotp.TOTP(self.token)
+            result['token'] = totp.now()
         return result
 
     def _call(self, task):
