@@ -12,6 +12,7 @@ install_requires = [
     'mock',
     'setuptools',
     'zope.interface',
+    'pyotp',
 ]
 
 docs_extras = [
